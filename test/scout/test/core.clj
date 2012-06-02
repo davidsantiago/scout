@@ -44,18 +44,20 @@
          (scout/pre-match (scout/scanner "beginning" 9
                                          (scout/match-info 6 8 ["in"])))))
   (is (= "test"
-         (scout/pre-match (scout/scan (scout/scan (scout/scanner "test string")
-                                                  #"test")
-                                      #"\s+")))))
+         (-> (scout/scanner "test string")
+             (scout/scan #"test")
+             (scout/scan #"\s+")
+             scout/pre-match))))
 
 (deftest test-post-match
   (is (= "ning"
          (scout/post-match (scout/scanner "beginning" 5
                                           (scout/match-info 3 5 ["in"])))))
   (is (= "string"
-         (scout/post-match (scout/scan (scout/scan (scout/scanner "test string")
-                                                   #"test")
-                                       #"\s+")))))
+         (-> (scout/scanner "test string")
+             (scout/scan #"test")
+             (scout/scan #"\s+")
+             scout/post-match))))
 
 ;;
 ;; Scanning/Advancing tests.
@@ -63,91 +65,116 @@
 
 (deftest test-scan
   (is (= "t"
-         (scout/matched (scout/scan (scout/scanner "test") #"t"))))
-  (is (= 1 (scout/position (scout/scan (scout/scanner "test") #"t"))))
+         (-> (scout/scanner "test")
+             (scout/scan #"t")
+             scout/matched)))
+  (is (= 1 (-> (scout/scanner "test")
+               (scout/scan #"t")
+               scout/position)))
   (is (= "test"
-         (scout/matched (scout/scan (scout/scanner "test") #"test"))))
+         (-> (scout/scanner "test")
+             (scout/scan #"test")
+             scout/matched)))
   (is (scout/end? (scout/scan (scout/scanner "test") #"test")))
   (is (= ["t"]
-           (scout/groups (scout/scan (scout/scanner "test string") #"t"))))
+         (-> (scout/scanner "test-string")
+             (scout/scan #"t")
+             scout/groups)))
   ;; Compounded scans should work.
   (is (= 5
-         (scout/position (scout/scan (scout/scan (scout/scanner "test string")
-                                                 #"test")
-                                     #"\s+"))))
+         (-> (scout/scanner "test string")
+             (scout/scan #"test")
+             (scout/scan #"\s+")
+             scout/position)))
   (is (= 4
-         (:start (:match (scout/scan (scout/scan (scout/scanner "test string")
-                                                 #"test")
-                                     #"\s+")))))
+         (-> (scout/scanner "test string")
+             (scout/scan #"test")
+             (scout/scan #"\s+")
+             (get-in [:match :start]))))
   (is (= 5
-         (:end (:match (scout/scan (scout/scan (scout/scanner "test string")
-                                               #"test")
-                                   #"\s+")))))
+         (-> (scout/scanner "test string")
+             (scout/scan #"test")
+             (scout/scan #"\s+")
+             (get-in [:match :end]))))
   ;; Failing to match shoud leave us in the same position
   (is (= 0 (scout/position (scout/scan (scout/scanner "testgoal")
                                        #"notinthestring"))))
   ;; Failing to match should remove pre-existing match data.
-  (is (= nil (:match (scout/scan (scout/scan (scout/scanner "test string")
-                                             #"test")
-                                 #"notinthestring")))))
+  (is (= nil (-> (scout/scanner "test string")
+                 (scout/scan #"test")
+                 (scout/scan #"notinthestring")
+                 (get :match)))))
 
 (deftest test-scan-until
+  (is (= "goal" (-> (scout/scanner "testgoal")
+                    (scout/scan-until #"goal")
+                    scout/matched)))
+  (is (= 8 (-> (scout/scanner "testgoal")
+               (scout/scan-until #"goal")
+               scout/position)))
   (is (= "goal"
-         (scout/matched (scout/scan-until (scout/scanner "testgoal")
-                                          #"goal"))))
-  (is (= 8 (scout/position (scout/scan-until (scout/scanner "testgoal")
-                                             #"goal"))))
-  (is (= "goal"
-         (scout/matched (scout/scan-until (scout/scanner "goal") #"goal"))))
+         (-> (scout/scanner "goal")
+             (scout/scan-until #"goal")
+             scout/matched)))
   (is (scout/end? (scout/scan-until (scout/scanner "goal") #"goal")))
   (is (scout/end? (scout/scan-until (scout/scanner "testgoal") #"goal")))
-  (is (= ["s"]
-         (scout/groups (scout/scan-until (scout/scanner "test string")
-                                         #"s"))))
+  (is (= ["s"] (-> (scout/scanner "test string")
+                   (scout/scan-until #"s")
+                   scout/groups)))
   ;; Compounded scan-untils should work.
-  (is (= 8
-         (scout/position (scout/scan-until (scout/scan-until (scout/scanner "test string")
-                                                             #"s")
-                                           #"r"))))
-  (is (= 7
-         (:start (:match (scout/scan-until (scout/scan-until (scout/scanner "test string")
-                                                             #"s")
-                                           #"r")))))
-  (is (= 8
-         (:end (:match (scout/scan-until (scout/scan-until (scout/scanner "test-string")
-                                                           #"s")
-                                         #"r")))))
+  (is (= 8 (-> (scout/scanner "test string")
+               (scout/scan-until #"s")
+               (scout/scan-until #"r")
+               scout/position)))
+  (is (= 7 (-> (scout/scanner "test string")
+               (scout/scan-until #"s")
+               (scout/scan-until #"r")
+               (get-in [:match :start]))))
+  (is (= 8 (-> (scout/scanner "test-string")
+               (scout/scan-until #"s")
+               (scout/scan-until #"r")
+               (get-in [:match :end]))))
   ;; Failing to match should leave us in the same position.
-  (is (= 0 (scout/position (scout/scan-until (scout/scanner "testgoal")
-                                             #"notinthestring"))))
+  (is (= 0 (-> (scout/scanner "testgoal")
+               (scout/scan-until #"notinthestring")
+               scout/position)))
   ;; Failing to match should remove pre-existing match data.
-  (is (= nil (:match (scout/scan-until (scout/scan (scout/scanner "test string")
-                                                   #"test")
-                                       #"notinthestring")))))
+  (is (= nil (-> (scout/scanner "test string")
+                 (scout/scan #"test")
+                 (scout/scan-until #"notinthestring")
+                 (get :match)))))
 
 (deftest test-skip-to-match-start
   (is (= "goal"
-         (scout/matched (scout/skip-to-match-start (scout/scanner "testgoal")
-                                                   #"goal"))))
-  (is (= 4 (scout/position (scout/skip-to-match-start (scout/scanner "testgoal")
-                                                     #"goal"))))
+         (-> (scout/scanner "testgoal")
+             (scout/skip-to-match-start #"goal")
+             scout/matched)))
+  (is (= 4 (-> (scout/scanner "testgoal")
+               (scout/skip-to-match-start #"goal")
+               scout/position)))
   (is (= "goal"
-         (scout/matched (scout/skip-to-match-start (scout/scanner "goal")
-                                                   #"goal"))))
+         (-> (scout/scanner "goal")
+             (scout/skip-to-match-start #"goal")
+             scout/matched)))
   ;; Calling scan on result of skip-to-match-start should work.
   (is (= "goal"
-         (scout/matched (scout/scan (scout/skip-to-match-start (scout/scanner "testgoal")
-                                                               #"goal")
-                                    #"goal"))))
-  (is (scout/end? (scout/scan (scout/skip-to-match-start (scout/scanner "testgoal")
-                                                         #"goal")
-                              #"goal")))
+         (-> (scout/scanner "testgoal")
+             (scout/skip-to-match-start #"goal")
+             (scout/scan #"goal")
+             scout/matched)))
+  (is (-> (scout/scanner "testgoal")
+          (scout/skip-to-match-start #"goal")
+          (scout/scan #"goal")
+          scout/end?))
   ;; Failing to match should leave us in the same position.
-  (is (= 0 (scout/position (scout/skip-to-match-start (scout/scanner "testgoal")
-                                                      #"yes"))))
+  (is (= 0 (-> (scout/scanner "testgoal")
+               (scout/skip-to-match-start #"yes")
+               scout/position)))
   ;; Failing to match should remove pre-existing match data.
-  (is (= nil (:match (scout/skip-to-match-start (scout/scan (scout/scanner "test string") #"test")
-                                                #"notinthestring")))))
+  (is (= nil (-> (scout/scanner "test string")
+                 (scout/scan #"test")
+                 (scout/skip-to-match-start #"notinthestring")
+                 (get :match)))))
 
 ;;
 ;; Look-ahead tests.
