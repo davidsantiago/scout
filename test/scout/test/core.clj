@@ -198,7 +198,7 @@
   (is (= "goal"
          (scout/check-until-inclusive (scout/scanner "goal") #"goal"))))
 
-(deftest test-peek ;; Renamed to peep here.
+(deftest test-peek
   (is (= "t"
          (scout/peek (scout/scanner "test") 1)))
   (is (= "test"
