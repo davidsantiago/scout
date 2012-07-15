@@ -1,5 +1,4 @@
 (ns scout.core
-  "An old-fashioned string scanner."
   (:refer-clojure :exclude [peek])
   (:import java.util.regex.Matcher))
 
@@ -12,6 +11,10 @@
                     ^MatchInfo match]) ;; Information about the last match.
 
 (defn scanner
+  "Create a Scanner from a string. If the optional integer second argument is
+   provided, it sets the scanner's current position to that index. If the
+   optional third argument is provided, it must be a MatchInfo data structure
+   which will be used as the scanner's latest match info."
   ([source-string]
      (scanner source-string 0 nil))
   ([source-string pos]
