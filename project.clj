@@ -1,4 +1,4 @@
-(defproject scout "0.1.0-SNAPSHOT"
+(defproject scout "0.1.0"
   :description "Functional string searching and matching for parsing."
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
