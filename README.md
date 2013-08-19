@@ -68,7 +68,7 @@ details.
 
 Add 
 
-    [scout "0.1.0"]
+    [scout "0.1.1"]
     
 to the `:dependencies` key of your Leiningen project map.
 
