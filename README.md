@@ -35,7 +35,7 @@ user=> (-> (scout/scanner "Hi there. :)")
 ```
 
 Here we used the `scan-until` function to search the string for the
-next occurence of the regular expression we gave it. It found a match
+next occurrence of the regular expression we gave it. It found a match
 at the end of the string, and returns a new scanner at position 12,
 which is just past the end of the string (So `scout.core/end?` will
 return true on the returned Scanner). Since there was a successful
